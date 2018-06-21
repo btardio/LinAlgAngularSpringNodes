@@ -1,0 +1,464 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>com.btardio.angular</groupId>
+	<artifactId>angular</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>jar</packaging>
+
+	<name>angular</name>
+	<description>Angular Tutorial</description>
+
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.0.2.RELEASE</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<java.version>1.8</java.version>
+		<maven.test.skip>false</maven.test.skip>
+		<gulp.output.directory>target/gulp</gulp.output.directory>
+		
+		<jblasLocation>/usr/lib/java/jblas.jar</jblasLocation>
+		
+		<!-- Changing to validate instructs Angular compile scripts to
+		     download and install node_modules, ng, npm, etc -->
+		<!-- <NGInstallsPhase>none</NGInstallsPhase>  -->
+ 		<NGInstallsPhase>validate</NGInstallsPhase>
+
+	</properties>
+
+	<dependencies>
+<!-- 		<dependency> -->
+<!-- 			<groupId>org.springframework.boot</groupId> -->
+<!-- 			<artifactId>spring-boot-starter-security</artifactId> -->
+<!-- 		</dependency> -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+		  <groupId>commons-io</groupId>
+		  <artifactId>commons-io</artifactId>
+		  <version>2.6</version>
+		</dependency>		
+		
+		<dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.9.4</version>
+		</dependency>
+		
+		<dependency>
+		   <groupId>org.json</groupId>
+		   <artifactId>json</artifactId>
+		   <version>20180130</version>
+		</dependency>		
+		
+		<!-- Remove for production -->
+<!--         <dependency> -->
+<!--             <groupId>org.springframework.boot</groupId> -->
+<!--             <artifactId>spring-boot-starter-actuator</artifactId> -->
+<!--         </dependency> -->
+        
+<!-- 		<dependency> -->
+<!-- 			<groupId>org.springframework.security</groupId> -->
+<!-- 			<artifactId>spring-security-test</artifactId> -->
+<!-- 			<scope>test</scope> -->
+<!-- 		</dependency> -->
+
+<!-- 		<dependency> -->
+<!-- 		  <groupId>org.jblas</groupId> -->
+<!-- 		  <artifactId>jblas</artifactId> -->
+<!-- 		  <version>1.2.4</version> -->
+<!-- 		</dependency> -->
+
+<dependency>
+    <groupId>com.btardio.angular</groupId>
+    <artifactId>angular</artifactId>
+    <version>1.0</version>
+    <scope>system</scope>
+    <systemPath>${jblasLocation}</systemPath>
+</dependency>
+
+	</dependencies>
+
+	<build>
+	  <resources>
+	    <resource>
+	      <directory>${project.basedir}/src/main/resources</directory>
+	    </resource>
+	    <resource>
+	      <directory>${project.build.directory}/generated-resources</directory>
+	    </resource>
+	  </resources>
+	  <plugins>
+	    <plugin>
+	      <groupId>org.springframework.boot</groupId>
+	      <artifactId>spring-boot-maven-plugin</artifactId>
+	    </plugin>
+	       
+
+		<plugin>
+			<groupId>org.codehaus.mojo</groupId>
+			<artifactId>exec-maven-plugin</artifactId>
+			<version>1.3.2</version>
+			
+			<executions>
+				<!-- Required: The following will ensure `npm install` is called
+				     before anything else during the 'Default Lifecycle' -->
+				<execution>
+					<id>npm install (validate)</id>
+					<goals>
+						<goal>exec</goal>
+					</goals>
+					<phase>${NGInstallsPhase}</phase>
+					<configuration>
+						<executable>npm</executable>
+						<arguments>
+							<argument>install</argument>
+						</arguments>
+					</configuration>
+				</execution>
+				
+
+
+
+				<!-- Optional: The following will output the npm configuration.
+				     I do this so my CI logs will show the npm information used
+						 for the build -->
+				<execution>
+					<id>npm config list (validate)</id>
+					<goals>
+						<goal>exec</goal>
+					</goals>
+					<phase>validate</phase>
+					<configuration>
+						<executable>npm</executable>
+						<arguments>
+							<argument>config</argument>
+							<argument>list</argument>
+						</arguments>
+					</configuration>
+				</execution>
+				
+				<execution>
+					<id>npm install npm (validate)</id>
+					<goals>
+						<goal>exec</goal>
+					</goals>
+					<phase>${NGInstallsPhase}</phase>
+					<configuration>
+						<executable>npm</executable>
+						<arguments>
+							<argument>install</argument>
+							<argument>npm</argument>
+						</arguments>
+					</configuration>
+				</execution>
+				
+				<execution>
+					<id>npm install ng (validate)</id>
+					<goals>
+						<goal>exec</goal>
+					</goals>
+					<phase>${NGInstallsPhase}</phase>
+					<configuration>
+						<executable>npm</executable>
+						<arguments>
+							<argument>install</argument>
+							<argument>@angular/cli</argument>
+						</arguments>
+					</configuration>
+				</execution>			
+				
+				<execution>
+					<id>npm install gulp (validate)</id>
+					<goals>
+						<goal>exec</goal>
+					</goals>
+					<phase>${NGInstallsPhase}</phase>
+					<configuration>
+						<executable>npm</executable>
+						<arguments>
+							<argument>install</argument>
+							<argument>gulp</argument>
+						</arguments>
+					</configuration>
+				</execution>		
+				
+				<!-- Required: This following calls `npm run build` where 'build' is
+				     the script name I used in my project, change this if yours is
+						 different -->
+				<execution>
+					<id>npm run build (compile)</id>
+					<goals>
+						<goal>exec</goal>
+					</goals>
+					<phase>generate-resources</phase>
+					<configuration>
+						<executable>npm</executable>
+						<arguments>
+							<argument>run</argument>
+							<argument>build</argument>
+						</arguments>
+					</configuration>
+				</execution>
+
+				<!-- Optional: The following runs the script that copies the
+				     appropriate files from the npm build directory into the location
+						 'maven-war-plugin' is expecting.  The copying could be done
+						 during the 'build' script, but I like to keep it separate.
+						 Idealy in the future, I won't need maven at which, I can just
+						 delete the 'prepare-for-maven-war' script. -->
+				<execution>
+					<id>npm run prepare-for-maven (prepare-package)</id>
+					<goals>
+						<goal>exec</goal>
+					</goals>
+					<phase>prepare-package</phase>
+					<configuration>
+						<executable>npm</executable>
+						<arguments>
+							<argument>run</argument>
+							<argument>prepare-for-maven-war</argument>
+						</arguments>
+					</configuration>
+				</execution>
+
+				<!-- Optional: The following will call gulpfile.js publish task -->
+				<execution>
+					<id>npm run publish (deploy)</id>
+					<goals>
+						<goal>exec</goal>
+					</goals>
+					<phase>deploy</phase>
+					<configuration>
+						<executable>npm</executable>
+						<arguments>
+							<argument>run</argument>
+							<argument>publish</argument>
+						</arguments>
+					</configuration>
+				</execution>
+
+				<!-- Required: The following will run unit tests.  My test scripts
+				     in npm look for the property 'skipTests', so I map it to
+						 'maven.test.skip'
+						 Note: the douple '-' syntax used below only works with npm >= 2. -->
+				<execution>
+					<id>npm run test (test)</id>
+					<goals>
+						<goal>exec</goal>
+					</goals>
+					<phase>test</phase>
+					<configuration>
+						<executable>npm</executable>
+						<arguments>
+							<argument>run</argument>
+							<argument>test</argument>
+							<argument>--</argument>
+							<argument>--skipTests=${maven.test.skip}</argument>
+						</arguments>
+					</configuration>
+				</execution>
+
+				<!-- Required: The following calls the npm script that cleans
+				     up the build. -->
+				<execution>
+					<id>npm run clean (clean)</id>
+					<goals>
+						<goal>exec</goal>
+					</goals>
+					<phase>clean</phase>
+					<configuration>
+						<executable>npm</executable>
+						<arguments>
+							<argument>run</argument>
+							<argument>clean</argument>
+						</arguments>
+					</configuration>
+				</execution>
+			</executions>
+
+			<configuration>
+			
+				<environmentVariables>
+					<!-- The following parameters create an NPM sandbox for CI -->
+<!-- 					<NPM_CONFIG_PREFIX>${basedir}/npm</NPM_CONFIG_PREFIX> -->
+<!-- 					<NPM_CONFIG_CACHE>${NPM_CONFIG_PREFIX}/cache</NPM_CONFIG_CACHE> -->
+<!-- 					<NPM_CONFIG_TMP>${project.build.directory}/npmtmp</NPM_CONFIG_TMP> -->
+				</environmentVariables>
+				<workingDirectory>${project.basedir}/angular</workingDirectory>
+			</configuration>
+		</plugin>	    
+	    
+	    <plugin>
+	      <artifactId>maven-resources-plugin</artifactId>
+	      <executions>
+	        <execution>
+	          <!-- Serves *only* to filter the wro.xml so it can get an absolute 
+	            path for the project -->
+	          <id>copy-resource-npm</id>
+	          <phase>initialize</phase>
+	          <goals>
+	            <goal>copy-resources</goal>
+	          </goals>
+	          <configuration>
+	            <outputDirectory>${basedir}/angular</outputDirectory>
+	            <resources>
+	              <resource>
+			        <directory>${basedir}/angular/node_modules/npm/bin</directory>
+			        <includes>
+			          <include>npm</include>
+			        </includes>
+	              </resource>
+	            </resources>
+	          </configuration>
+	        </execution>
+	        <execution>
+	          <!-- Serves *only* to filter the wro.xml so it can get an absolute 
+	            path for the project -->
+	          <id>copy-resource-ng</id>
+	          <phase>initialize</phase>
+	          <goals>
+	            <goal>copy-resources</goal>
+	          </goals>
+	          <configuration>
+	            <outputDirectory>${basedir}/angular</outputDirectory>
+	            <resources>
+	              <resource>
+			        <directory>${basedir}/angular/node_modules/@angular/cli/bin</directory>
+			        <includes>
+			          <include>ng</include>
+			        </includes>
+	              </resource>
+	            </resources>
+	          </configuration>
+	        </execution>
+	        
+	        <execution>
+	          <!-- Serves *only* to filter the wro.xml so it can get an absolute 
+	            path for the project -->
+	          <id>copy-resources-ang-dist</id>
+	          <phase>process-resources</phase>
+	          <goals>
+	            <goal>copy-resources</goal>
+	          </goals>
+	          <configuration>
+	            <outputDirectory>${project.build.directory}/classes/static</outputDirectory>
+	            <resources>
+	              <resource>
+	                <directory>${basedir}/angular/dist/angular</directory>
+	                <filtering>true</filtering>
+	              </resource>
+	            </resources>	            
+	          </configuration>
+	        </execution>
+
+<!-- 	        <execution> -->
+<!-- 	          Serves *only* to filter the wro.xml so it can get an absolute -->
+<!-- 	            path for the project -->
+<!-- 	          <id>copy-resources</id> -->
+<!-- 	          <phase>validate</phase> -->
+<!-- 	          <goals> -->
+<!-- 	            <goal>copy-resources</goal> -->
+<!-- 	          </goals> -->
+<!-- 	          <configuration> -->
+<!-- 	            <outputDirectory>${basedir}/target/wro</outputDirectory> -->
+<!-- 	            <resources> -->
+<!-- 	              <resource> -->
+<!-- 	                <directory>src/main/wro</directory> -->
+<!-- 	                <filtering>true</filtering> -->
+<!-- 	              </resource> -->
+<!-- 	            </resources> -->
+<!-- 	          </configuration> -->
+<!-- 	        </execution> -->
+	      </executions>
+	    </plugin>
+<!-- 	    <plugin> -->
+<!--           <id>run wro</id> -->
+<!-- 	      <groupId>ro.isdc.wro4j</groupId> -->
+<!-- 	      <artifactId>wro4j-maven-plugin</artifactId> -->
+<!-- 	      <version>1.7.6</version> -->
+<!-- 	      <executions> -->
+<!-- 	        <execution> -->
+<!-- 	          <phase>generate-resources</phase> -->
+<!-- 	          <goals> -->
+<!-- 	            <goal>run</goal> -->
+<!-- 	          </goals> -->
+<!-- 	        </execution> -->
+<!-- 	      </executions> -->
+<!-- 	      <configuration> -->
+<!-- 	        <wroManagerFactory>ro.isdc.wro.maven.plugin.manager.factory.ConfigurableWroManagerFactory</wroManagerFactory> -->
+<!-- 	        <cssDestinationFolder>${project.build.directory}/classes/static/css</cssDestinationFolder> -->
+<!-- 	        <jsDestinationFolder>${project.build.directory}/classes/static/js</jsDestinationFolder> -->
+<!-- 	        <wroFile>${basedir}/wro/wro.xml</wroFile> -->
+<!-- 	        <extraConfigFile>${basedir}/wro/wro.properties</extraConfigFile> -->
+<!-- 	        <contextFolder>${basedir}/wro</contextFolder> -->
+<!-- 	      </configuration> -->
+<!-- 	      <dependencies> -->
+<!-- 	        <dependency> -->
+<!-- 	          <groupId>org.webjars</groupId> -->
+<!-- 	          <artifactId>jquery</artifactId> -->
+<!-- 	          <version>2.1.1</version> -->
+<!-- 	        </dependency> -->
+<!-- 	        <dependency> -->
+<!-- 	          <groupId>org.webjars</groupId> -->
+<!-- 	          <artifactId>angularjs</artifactId> -->
+<!-- 	          <version>1.3.8</version> -->
+<!-- 	        </dependency> -->
+<!-- 	        <dependency> -->
+<!-- 	          <groupId>org.webjars</groupId> -->
+<!-- 	          <artifactId>bootstrap</artifactId> -->
+<!-- 	          <version>3.2.0</version> -->
+<!-- 	        </dependency> -->
+<!-- 	      </dependencies> -->
+<!-- 	    </plugin> -->
+	  </plugins>
+	</build>
+
+
+</project>
+
+
+
+
+
+
+
+
+
+
+
+				<!-- Required: The following will ensure `npm install` is called
+				     before anything else during the 'Clean Lifecycle' -->
+<!-- 				<execution> -->
+<!-- 					<id>npm install (clean)</id> -->
+<!-- 					<goals> -->
+<!-- 						<goal>exec</goal> -->
+<!-- 					</goals> -->
+<!-- 					<phase>pre-clean</phase> -->
+<!-- 					<configuration> -->
+<!-- 						<executable>npm</executable> -->
+<!-- 						<arguments> -->
+<!-- 							<argument>install</argument> -->
+<!-- 						</arguments> -->
+<!-- 					</configuration> -->
+<!-- 				</execution> -->
+
+

@@ -1,0 +1,18 @@
+/* You can add global styles to this file, and also import other style files */
+
+.dagrenode rect{
+	  stroke: #333;
+  fill: #fff;
+  stroke-width: 1.5px;
+/* 	background-color: red; */
+/* 	fill: blue; */
+/* 	color: green; */
+/* 	stroke: red; */
+	
+}
+
+/* .dagrenode path{ */
+/*   stroke: #333; */
+/*   fill: #333; */
+/*   stroke-width: 1.5px; */
+/* } */

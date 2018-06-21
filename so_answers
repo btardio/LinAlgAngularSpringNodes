@@ -1,0 +1,35 @@
+
+https://stackoverflow.com/questions/41937283/how-to-use-materializecss-in-angular-2
+
+Answer from this repo : https://github.com/stanleyeosakul/angular-travelville
+Setup Materialize CSS
+
+    Run yarn add materialize-css@next ( or npm i materialize-css@next)
+
+    Add Materialize CSS into .angular-cli.json ( or angular.json)
+
+    json
+        // .angular-cli.json
+        {
+          "apps": [
+            {
+              ...
+              "styles": [
+                "../node_modules/materialize-css/dist/css/materialize.min.css",
+                "styles.css"
+              ],
+              "scripts": [
+                "../node_modules/materialize-css/dist/js/materialize.min.js"
+              ],
+              ...
+            }
+          ]
+        }
+
+    Declare the M variable in ./src/typings.d.ts (or create the file yourself)
+
+    typescript
+    declare var M;
+
+    Materialize CSS is now integrated into Angular!
+

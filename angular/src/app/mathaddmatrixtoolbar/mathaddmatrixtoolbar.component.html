@@ -1,0 +1,39 @@
+
+
+<div id="boolhiddenaddmatrixid" [hidden]="boolhiddenaddmatrix">
+
+
+			Create Matrix &nbsp;
+			<button (click)="finished()">Finished</button>
+			&nbsp;
+			<button (click)="addRow()">Add Row</button>
+			&nbsp;
+			<button (click)="deleteRow()">Delete Row</button>
+			&nbsp;
+			<button (click)="addColumn()">Add Column</button>
+			&nbsp;
+			<button (click)="deleteColumn()">Delete Column</button>
+			&nbsp;
+          
+
+  
+  <table border=1>	      
+<ng-container *ngFor="let row of matrix; let i = index">
+	<tr>
+	<ng-container *ngFor="let number of row; let j = index">
+		<td><input size="4" 
+		           value="{{number}}" 
+		           type="text" 
+				   [(ngModel)]="matrix[i][j]" 
+		           [ngModelOptions]="{updateOn: 'blur',standalone: true}" 		           
+		           (ngModelChange)="saverange(i,j)"></td>
+	</ng-container>
+	</tr>
+</ng-container>
+</table>
+  
+
+  
+  
+  
+</div> <!-- hidden -->
