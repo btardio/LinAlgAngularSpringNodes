@@ -1,14 +1,18 @@
 import { MorF } from './mor-f.enum';
+import { SvgMessageType } from './svg-message-type.enum';
 
 export class SvgMessage {
 
   private id: number;
   private morf: MorF;
   private element: any;
+  private messageType: SvgMessageType;
 
-  constructor( id: number, morf: string, element: any ) {
+  constructor( id: number, morf: string, element: any, msgType: SvgMessageType ) {
 
     this.id = id;
+
+    this.messageType = msgType;
 
     this.element = element;
 
@@ -24,6 +28,10 @@ export class SvgMessage {
 
   }
 
+  getMessageType(): SvgMessageType {
+    return this.messageType;
+  }
+  
   getElement ( ): any {
     return this.element;
   }
@@ -40,5 +48,7 @@ export class SvgMessage {
   getMorf ( ): MorF {
     return this.morf;
   }
+  
+
 
 }

@@ -11,8 +11,6 @@
     <div class="card blue-grey darken-1">
       <div class="card-content white-text">
 
-
-        Create Matrix Transformations &nbsp;
         <button [disabled]="addmatrixdisabled" (click)="addMatrix()">Add Matrix</button>
         &nbsp;
         <button [disabled]="addfunctiondisabled" (click)="addFunction()">Add Function</button>
@@ -26,6 +24,9 @@
         <button [disabled]="selectalldisabled" (click)="selectAll()">Select All</button>
         &nbsp;
         <button [disabled]="calcdisabled" (click)="clickCalc()">Calculate</button>
+        &nbsp;
+        <button [disabled]="swaporderdisabled" (click)="swapOrder()">Swap Order</button>
+        
       </div>
     </div>
   </div>

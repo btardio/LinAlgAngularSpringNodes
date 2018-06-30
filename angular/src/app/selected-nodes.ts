@@ -121,7 +121,7 @@ export class SelectedNodes {
     }
 
     if ( !this.selectedMatrices.remove(n) ) {
-      throw Error('Attempting to remove an item that does not exist.');
+      throw Error('Attempting to remove item with id ' + n + ' that does not exist.');
     }
   }
 

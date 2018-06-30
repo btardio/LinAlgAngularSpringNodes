@@ -51,7 +51,7 @@ export class LinAlgMatrix {
     this.selected = false;
     this.edges = new basLinkedList<LinAlgEdge>();
 
-    
+
     if ( edges !== null && edges !== undefined ) {
       edges.forEach( edge => {
         this.edges.add(edge);
@@ -81,8 +81,9 @@ export class LinAlgMatrix {
         }
     });
  }
+
   /**
-   * Returns true if this matrix has no input from another function, if this matrix is an end matrix
+   * Returns true if this matrix has no input from another function, also means this matrix is an end matrix
    */
   isBottomEndMatrix(): boolean {
 
@@ -97,6 +98,9 @@ export class LinAlgMatrix {
 
   }
 
+  /**
+   * Returns true if this matrix has no output to another function, also means this matrix is an end matrix
+   */
   isTopEndMatrix(): boolean {
 
     const functions: basLinkedList<LinAlgFunction> = this.getOutputFunctions();
@@ -150,7 +154,7 @@ export class LinAlgMatrix {
       return false;
     }
   }
-  
+
   /**
    * Returns the edges that point to this matrix
    */
@@ -199,6 +203,24 @@ export class LinAlgMatrix {
   }
 
   /**
+   * Returns the functions that are outputs of this matrix. This is
+   * determined by the direction of the edges.
+   */
+  getOutputFunctionsAsSet(): basSet<LinAlgFunction> {
+    const moutputs: basSet<LinAlgFunction> = new basSet<LinAlgFunction>();
+
+    this.edges.forEach( e => {
+
+      if ( e.isPointedAtFunction() ) {
+        moutputs.add(e.getFunctionOfIJ());
+      }
+
+    } );
+
+    return moutputs;
+  }
+
+  /**
    * Returns the functions that are inputs of this matrix. This is determined by the
    * direction of the edges.
    */
@@ -217,7 +239,7 @@ export class LinAlgMatrix {
     return minputs;
   }
 
-  
+
   /**
    * Removes an edge connected from this matrix to a function. Removes the
    * edge locally, in the this.edges linked list.
@@ -310,7 +332,10 @@ export class LinAlgMatrix {
     this.id = id;
   }
 
-  toMathJaxString(): string {
+  /**
+   * Produces a Katex string for rendering the matrix with Katex.
+   */
+  toKatexString(): string {
 
     let astr = '\\left(\\begin{matrix}';
     astr += '';
@@ -332,9 +357,8 @@ export class LinAlgMatrix {
 
     astr += 'end{matrix}\\right)';
 
-    // return astr;
     return katexrender.renderToString(astr);
-    // return katexrender.renderToString('\\left(\\begin{matrix}1&2&7\\\\6&8&9\\\\4&1&5\\end{matrix}\\right)');
+
   }
 
   /**
@@ -357,6 +381,30 @@ export class LinAlgMatrix {
     astr += ']';
 
     return '}' + astr;
+  }
+
+  /**
+   * Swaps the order of two edges. Not currently in use. Does not make sense to swap the order of
+   * two functions other than for visual appearance.
+   */
+  swapEdges( a: LinAlgEdge, b: LinAlgEdge ) {
+
+    if ( !this.edges.contains(a) || ! this.edges.contains(b) ) {
+      throw Error('Function does not have edge requested to be swapped.');
+    }
+
+    const indexa: number = this.edges.indexOf(a);
+    const indexb: number = this.edges.indexOf(b);
+
+    const asArray: Array<LinAlgEdge> = this.edges.toArray();
+
+    asArray[indexa] = b;
+    asArray[indexb] = a;
+
+    this.edges.clear();
+
+    asArray.forEach( e => { this.edges.add(e); } );
+
   }
 
   /**

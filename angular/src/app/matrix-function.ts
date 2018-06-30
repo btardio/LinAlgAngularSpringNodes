@@ -33,14 +33,6 @@ export class LinAlgFunction {
    */
   private edges: basLinkedList<LinAlgEdge>;
 
-  /**
-   * Boolean specifying whether the matrix is 'current'. Current meaning since the last
-   * container changed signal was called, this matrix has every node leading up to it
-   * as being current.
-   */
-  current: boolean;
-
-  inputsCompleted: Array<boolean>;
 
   /**
    * Instantiates the class, setting operand and, if provided, the edges
@@ -60,6 +52,29 @@ export class LinAlgFunction {
   }
 
   /**
+   * Swaps the order of two edges.
+   */
+  swapEdges( a: LinAlgEdge, b: LinAlgEdge ) {
+
+    if ( !this.edges.contains(a) || ! this.edges.contains(b) ) {
+      throw Error('Function does not have edge requested to be swapped.');
+    }
+
+    const indexa: number = this.edges.indexOf(a);
+    const indexb: number = this.edges.indexOf(b);
+
+    const asArray: Array<LinAlgEdge> = this.edges.toArray();
+
+    asArray[indexa] = b;
+    asArray[indexb] = a;
+
+    this.edges.clear();
+
+    asArray.forEach( e => { this.edges.add(e); } );
+
+  }
+
+  /**
    * Calculates the inputs of this function, calling the HttpClientService
    * This function is not to be called directly, should be called from MatrixService
    */
@@ -70,7 +85,7 @@ export class LinAlgFunction {
     return Observable.create(observer => {
       this.getInputMatrices().forEach( m => {
 
-        m.calc( matrixHttpClient ).subscribe( m => { 
+        m.calc( matrixHttpClient ).subscribe( m => {
 
           boolns.push( true );
 
@@ -93,7 +108,6 @@ export class LinAlgFunction {
               observer.complete();
             });
           } else if ( boolns.length > this.getInputMatrices().size() ) { throw Error('More observables returned than expected.'); }
-  
         } );
       } );
 
@@ -101,12 +115,26 @@ export class LinAlgFunction {
 
   }
 
+
   /**
-   * Returns true if this function has no input from another matrix, if this function is an end function
+   * Returns true if this matrix has no input from another function, also means this matrix is an end matrix
    */
-  isEndFunction(): boolean {
+  isBottomEndFunction(): boolean {
 
     const matrices: basLinkedList<LinAlgMatrix> = this.getInputMatrices();
+
+    if ( matrices.size() === 0 ) {
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Returns true if this matrix has no output to another function, also means this matrix is an end matrix
+   */
+  isTopEndFunction(): boolean {
+
+    const matrices: basLinkedList<LinAlgMatrix> = this.getOutputMatrices();
 
     if ( matrices.size() === 0 ) {
       return true;
@@ -115,7 +143,8 @@ export class LinAlgFunction {
     return false;
 
   }
-  
+
+
 
   /**
    * Sets the unique id of the function.
@@ -280,7 +309,7 @@ export class LinAlgFunction {
 
       const rarray: Array<Array<Array<number>>> = new Array<Array<Array<number>>>();
 
-      // TODO
+      // TODO decomposition
 
       return rarray;
 
@@ -381,21 +410,3 @@ export class LinAlgFunction {
 }
 
 
-
-
-//
-//            
-//            matrixHttpClient.makeRequest( this ).subscribe( response => {
-//              
-//              console.log('returned from request');
-//              
-//              if ( this.getOutputMatrices().size() !== 1 ) {
-//                throw Error('Unable to calculate two output matrices for operand.');
-//              }
-//      
-//              const outputMatrix: LinAlgMatrix = this.getOutputMatrices().first();
-//              console.log( response.rmatrix );
-//              outputMatrix.setMatrix( response.rmatrix );
-//              
-//              
-//              //this.getOutputMatrices().first().setMatrix( [[4,4],[3,3]] );

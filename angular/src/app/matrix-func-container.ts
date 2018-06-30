@@ -150,7 +150,7 @@ export class MatFuncContainer {
   /**
    * Insert a new function.
    */
-  addfunc( f: LinAlgFunction ): number {
+  addfunc( f: LinAlgFunction ): LinAlgFunction {
 
     const fadd: Vf = { key: f.getId(), data: f };
 
@@ -160,13 +160,13 @@ export class MatFuncContainer {
       this.addEdge(edge);
     } );
 
-    return f.getId();
+    return f;
   }
 
   /**
    * Insert a new matrix.
    */
-  addmatrix( m: LinAlgMatrix ): number {
+  addmatrix( m: LinAlgMatrix ): LinAlgMatrix {
 
     const madd: Vm = { key: m.getId(), data: m };
 
@@ -176,7 +176,7 @@ export class MatFuncContainer {
       this.addEdge(edge);
     } );
 
-    return m.getId();
+    return m;
   }
 
 

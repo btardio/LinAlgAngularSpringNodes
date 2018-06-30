@@ -68,15 +68,12 @@ export class MatrixHttpClientService {
   }
 
 
-  makeRequest( f: LinAlgFunction ): Observable<SpringPostResponse> {
+//  makePostInterfaceTester ( postInterface: SpringPost ): SpringPost {
+//    return postInterface;
+//  }
 
-    const httpOptions = {
-      headers: new HttpHeaders({
-        'Content-Type':  'application/json',
-      })
-    };
+  makePostInterface( matrices: basLinkedList<LinAlgMatrix>, f: LinAlgFunction ): SpringPost {
 
-    const matrices: basLinkedList<LinAlgMatrix> = f.getInputMatrices();
     const postInterface: SpringPost = {'@type': 'SimpleJson', matrices: null, operations: null};
 
     postInterface.matrices = new Array<Array<Array<number>>>();
@@ -96,6 +93,21 @@ export class MatrixHttpClientService {
       }
 
     });
+
+    return postInterface;
+
+  }
+
+  makeRequest( f: LinAlgFunction ): Observable<SpringPostResponse> {
+
+    const httpOptions = {
+      headers: new HttpHeaders({
+        'Content-Type':  'application/json',
+      })
+    };
+
+    const matrices: basLinkedList<LinAlgMatrix> = f.getInputMatrices();
+    let postInterface: SpringPost = this.makePostInterface( matrices, f );
 
   //  "http://127.0.0.1:8080/matrices"
 

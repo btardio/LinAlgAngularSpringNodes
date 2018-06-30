@@ -25,6 +25,7 @@ import { Bag as basBag } from 'typescript-collections';
 //  add matrix edge recalculates the function
 //  change function type
 //  include other operands *, -, 
+//  with only 1 matrix selected, swap direction should move matrix to other side of a function without having function selected
 //  ...
 //
 // README
@@ -53,14 +54,28 @@ export class MatrixService {
    */
   private containerMatFunc: MatFuncContainer;
 
+  /**
+   * Triggered if the contents of the container change, ie: if a matrix is added or
+   * removed, if an edge is changed. Anything that would affect the rendering of the
+   * svg and would require a re-rendering.
+   */
   private sbjContainerChanged: Subject<null> = new Subject<null>();
   containerChanged$: Observable<null> = this.sbjContainerChanged.asObservable();
 
-  private sbjSelectedMatricesChanged: Subject<MatrixService> = new Subject<MatrixService>();
-  selectedMatricesChanged$: Observable<MatrixService> = this.sbjSelectedMatricesChanged.asObservable();
+  /**
+   * Triggered if an html element changes, ie: a user toggles the select button for
+   * a matrix. This is triggered for events that would not require an svg re-render
+   * but could require html elements, such as the visibility of another html element,
+   * to change.
+   */
+  private sbjSelectedChanged: Subject<null> = new Subject<null>();
+  selectedChanged$: Observable<null> = this.sbjSelectedChanged.asObservable();
 
-  private sbjSelectedFunctionsChanged: Subject<MatrixService> = new Subject<MatrixService>();
-  selectedFunctionsChanged$: Observable<MatrixService> = this.sbjSelectedFunctionsChanged.asObservable();
+  // private sbjSelectedMatricesChanged: Subject<MatrixService> = new Subject<MatrixService>();
+  // selectedMatricesChanged$: Observable<MatrixService> = this.sbjSelectedMatricesChanged.asObservable();
+
+  // private sbjSelectedFunctionsChanged: Subject<MatrixService> = new Subject<MatrixService>();
+  // selectedFunctionsChanged$: Observable<MatrixService> = this.sbjSelectedFunctionsChanged.asObservable();
 
   /**
    * BSTree of available unique IDs for LinAlgFunction, LinAlgMatrix, LinAlgEdge
@@ -148,6 +163,36 @@ export class MatrixService {
     });
   }
 
+  getSbjSelectedChanged(): Subject<null> {
+    return this.sbjSelectedChanged;
+  }
+
+  getMatricesWithoutOutputs(): basSet<LinAlgMatrix> {
+
+    const rmatrices: basSet<LinAlgMatrix> = new basSet<LinAlgMatrix>();
+
+    this.getMatrices().forEach( m => {
+      if ( m.isTopEndMatrix() /* && !m.isBottomEndMatrix() */ ) {
+        rmatrices.add( m );
+      }
+    });
+
+    return rmatrices;
+  }
+
+  getFunctionsWithoutOutputs(): basSet<LinAlgFunction> {
+
+    const rfunctions: basSet<LinAlgFunction> = new basSet<LinAlgFunction>();
+
+    this.getFunctions().forEach( f => {
+      if ( f.isTopEndFunction() /* && !f.isBottomEndFunction() */ ) {
+        rfunctions.add( f );
+      }
+    });
+
+    return rfunctions;
+
+  }
   /**
    * Returns an underlying Container class that stores Matrices, Functions Edges.
    */
@@ -190,8 +235,8 @@ export class MatrixService {
     this.containerMatFunc.setAllMatricesSelectedToFalse();
     this.containerMatFunc.setAllFunctionsSelectedToFalse();
     this.selected.clearSelectedAll();
-    this.sbjSelectedMatricesChanged.next( this );
-    this.sbjSelectedFunctionsChanged.next( this );
+    this.sbjSelectedChanged.next();
+
   }
 
   /**
@@ -200,7 +245,7 @@ export class MatrixService {
   clearSelectedMatrices(): void {
     this.containerMatFunc.setAllMatricesSelectedToFalse();
     this.selected.clearSelectedMatrices();
-    this.sbjSelectedMatricesChanged.next( this );
+    this.sbjSelectedChanged.next();
   }
 
   /**
@@ -209,7 +254,7 @@ export class MatrixService {
   clearSelectedFunctions(): void {
     this.containerMatFunc.setAllFunctionsSelectedToFalse();
     this.selected.clearSelectedFunctions();
-    this.sbjSelectedFunctionsChanged.next( this );
+    this.sbjSelectedChanged.next();
   }
 
   /**
@@ -232,7 +277,7 @@ export class MatrixService {
   addSelectedMatrix(m_id: number): void {
     this.selected.pushMatrix(m_id);
     this.getMatrixWithId(m_id).setSelected(true);
-    this.sbjSelectedMatricesChanged.next( this );
+    this.sbjSelectedChanged.next();
   }
 
   /**
@@ -241,7 +286,7 @@ export class MatrixService {
   removeSelectedMatrix(m_id: number): void {
     this.selected.removeMatrix(m_id);
     this.getMatrixWithId(m_id).setSelected(false);
-    this.sbjSelectedMatricesChanged.next( this );
+    this.sbjSelectedChanged.next();
   }
 
   /**
@@ -250,7 +295,7 @@ export class MatrixService {
   addSelectedFunction(f_id: number): void {
     this.selected.pushFunction(f_id);
     this.getFunctionWithId(f_id).setSelected(true);
-    this.sbjSelectedFunctionsChanged.next( this );
+    this.sbjSelectedChanged.next();
   }
 
   /**
@@ -259,7 +304,7 @@ export class MatrixService {
   removeSelectedFunction(f_id: number): void {
     this.selected.removeFunction(f_id);
     this.getFunctionWithId(f_id).setSelected(false);
-    this.sbjSelectedFunctionsChanged.next( this );
+    this.sbjSelectedChanged.next();
   }
 
   /**
@@ -287,9 +332,11 @@ export class MatrixService {
   /**
    * Internal: Create a result matrix for a newly created function.
    */
-  private makeResultMatrix( f: LinAlgFunction ): void {
+  private makeResultMatrix( f: LinAlgFunction ): LinAlgMatrix {
 
       let matrixArray: Array<Array<number>> | Array<Array<Array<number>>>;
+
+      let rval: LinAlgMatrix;
 
       this.clearSelectedAll();
 
@@ -307,12 +354,14 @@ export class MatrixService {
 
         const edge: LinAlgEdge = new LinAlgEdge( this.getPushUniqueId(), f, m );
 
-        this.addMatrix( m );
+        rval = this.addMatrix( m );
 
         f.addEdge(edge);
         m.addEdge(edge);
 
       }
+
+    return rval;
 
   }
 
@@ -321,16 +370,16 @@ export class MatrixService {
    * Insert a new function into the MatFunc container, additionally creates a new matrix and
    * performs a calculation.
    */
-  addFunction( f: LinAlgFunction ): number {
+  addFunction( f: LinAlgFunction ): Array<LinAlgFunction | LinAlgMatrix> {
     f.setId(this.getPushUniqueId());
-    let rval: number;
+    const rval: Array<LinAlgFunction | LinAlgMatrix> = new Array<LinAlgFunction | LinAlgMatrix>();
 
     const selectedMatrices: basLinkedList<number> = this.selected.getSelectedMatricesAsLinkedList();
 
     selectedMatrices.reverse();
 
     if ( selectedMatrices.size() === 0 ) {
-      rval = this.containerMatFunc.addfunc(f);
+      rval.push(this.containerMatFunc.addfunc(f));
       // this.matrixHttpClient.setToCalcInFuture(f);
     }
     else {
@@ -340,16 +389,16 @@ export class MatrixService {
         this.getMatrixWithId(matrix).addEdge(edge);
       });
 
-      this.makeResultMatrix(f);
-      rval = this.containerMatFunc.addfunc(f);
+      rval.push(this.makeResultMatrix(f));
+      rval.push(this.containerMatFunc.addfunc(f));
 
-      this.matrixHttpClient.calc(f);
+      // this.matrixHttpClient.calc(f);
 
     }
 
-    this.clearSelectedAll();
+    // this.clearSelectedAll();
 
-    this.containerChanged();
+    // ///this.containerChanged();
     return rval;
   }
 
@@ -368,7 +417,7 @@ export class MatrixService {
 
     m.destroy();
 
-    this.containerChanged();
+    // this.containerChanged();
 
   }
 
@@ -387,7 +436,7 @@ export class MatrixService {
 
     f.destroy();
 
-    this.containerChanged();
+    // this.containerChanged();
   }
 
   /**
@@ -399,7 +448,7 @@ export class MatrixService {
 
     matrices_ids.forEach( matrix_id => { this.deleteMatrix( this.getMatrixWithId( matrix_id ) ); } );
 
-    this.clearSelectedMatrices();
+    // this.clearSelectedMatrices();
 
   }
 
@@ -412,18 +461,18 @@ export class MatrixService {
 
     functions_ids.forEach( function_id => { this.deleteFunction( this.getFunctionWithId( function_id ) ); } );
 
-    this.clearSelectedFunctions();
+    // this.clearSelectedFunctions();
 
   }
 
   /**
    * Adds a matrix to the container. If another function is selected, attaches an edge with that function.
    */
-  addMatrix( m: LinAlgMatrix ): number {
+  addMatrix( m: LinAlgMatrix ): LinAlgMatrix {
 
     m.setId ( this.getPushUniqueId() );
 
-    let rval: number;
+    let rval: LinAlgMatrix;
 
     const selectedFunctions: basLinkedList<number> = this.selected.getSelectedFunctionsAsLinkedList();
 
@@ -443,8 +492,8 @@ export class MatrixService {
       // signal that function fId changed
     }
 
-    this.clearSelectedAll();
-    this.containerChanged();
+    // this.clearSelectedAll();
+    // ///this.containerChanged();
     return rval;
 
   }
@@ -467,7 +516,7 @@ export class MatrixService {
       throw Error('Select at least 1 matrix and 1 function to connect.');
     }
 
-    if ( f.size() === 1 ) {
+    if ( f.size() === 1 ) { // handles case of f.size() === m.size() === 1
 
       m.forEach( mfe => {
 
@@ -483,7 +532,7 @@ export class MatrixService {
 
     }
 
-    if ( m.size() === 1 ) {
+    else if ( m.size() === 1 ) {
 
       f.forEach( ffe => {
 
@@ -500,7 +549,7 @@ export class MatrixService {
 
     }
 
-    this.containerChanged();
+    // this.containerChanged();
 
     return addedEdges;
 
@@ -522,7 +571,42 @@ export class MatrixService {
 
     edge.swapIJ();
 
-    this.containerChanged();
+    // this.containerChanged();
+  }
+
+  clickSwapOrder() {
+
+    // get the selected matrices
+    const m: basLinkedList<number> = this.selected.getSelectedMatricesAsLinkedList();
+    const f: basLinkedList<number> = this.selected.getSelectedFunctionsAsLinkedList();
+
+    // check that only two matrices and 0 functions are selected
+    if ( m.size() !== 2 ) { throw Error('Can only swap order of two matrices.'); }
+    if ( f.size() !== 0 ) { throw Error('Only the order of matrices can be swapped.'); }
+
+    // get the id's of the two selected matrices
+    const mone: LinAlgMatrix = this.getMatrixWithId( m.elementAtIndex(0) );
+    const mtwo: LinAlgMatrix = this.getMatrixWithId( m.elementAtIndex(1) );
+
+    // find a function or functions that intersect the two selected matrices
+    const outputFunctions: basSet<LinAlgFunction> = mone.getOutputFunctionsAsSet();
+    outputFunctions.intersection(mtwo.getOutputFunctionsAsSet());
+
+    // for each common function swap the edge within the function - todo? swap edge order in matrix also?
+    outputFunctions.forEach( ffe => {
+      let edgeone: LinAlgEdge = null;
+      let edgetwo: LinAlgEdge = null;
+      ffe.getEdges().forEach( e => {
+        if ( e.getMatrixOfIJ() === mone || e.getMatrixOfIJ() === mtwo) {
+
+          if ( edgeone == null ) { edgeone = e; }
+          else if ( edgetwo == null ) { edgetwo = e; }
+          else { throw Error('Function has multiple edges to same matrix.'); }
+
+        }
+      });
+      ffe.swapEdges( edgeone, edgetwo );
+    });
   }
 
   /**

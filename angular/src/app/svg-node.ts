@@ -2,36 +2,46 @@ import { LinAlgEdge } from './edge';
 import { LinAlgMatrix } from './matrix';
 import { LinAlgFunction } from './matrix-function';
 import { RenderableType } from './renderable-type.enum';
+import { LinkedList as basLinkedList } from 'typescript-collections';
 
+export class SvgRenderableContainer {
+
+  matrices: basLinkedList<SvgNodeMatrix> = new basLinkedList<SvgNodeMatrix>();
+  functions: basLinkedList<SvgNodeFunction> = new basLinkedList<SvgNodeFunction>();
+  edges: basLinkedList<SvgEdge> = new basLinkedList<SvgEdge>();
+
+}
 
 
 export class SvgRenderable {
   id: number;
   labelType: string;
-  label: string;
+  private label: string;
   classStr: string;
   renderableType: RenderableType;
-//  selectedText: string;
 
   constructor( ) {
     this.labelType = 'html';
     this.classStr = 'dagrenode';
-//    this.selectedText = 'No Text';
+  }
+
+  getLabel(): string {
+    return this.label;
+  }
+
+  setLabel( label: string ) {
+    this.label = label;
   }
 
   toString(): string {
 
-    return 'id: ' + this.id + 'renderableType:' + this.renderableType;
+    return '{id: ' + this.id + ',renderableType:' + this.renderableType + '}';
 
   }
 
   getId(): number {
     return this.id;
   }
-
-//  getSelectedText(): string {
-//    return this.selectedText;
-//  }
 
 
   getRenderableType(): RenderableType {
@@ -48,32 +58,26 @@ export class SvgNodeMatrix extends SvgRenderable {
 
     super();
 
-//    if ( matrix.getSelected() ) {
-//      this.selectedText = 'Select (Selected)';
-//    }
-//    else {
-//      this.selectedText = 'Select';
-//    }
-
     this.renderableType = RenderableType.SvgMatrixNode;
 
     this.matrix = matrix;
 
     this.id = matrix.getId();
 
-    this.label = '';
-    this.label += '<div class="toggle-switch"><input ';
-    if ( matrix.getSelected() ) { this.label += 'checked="true"'; }
-    this.label += 'type="checkbox" id=' + this.id +
+    let label = '';
+
+    label += '<div class="toggle-switch"><input ';
+    if ( matrix.getSelected() ) { label += 'checked="true"'; }
+    label += 'type="checkbox" id=' + this.id +
       ' onclick=window.angularComponentReference.zone.run(()&#61;&#62;{window.angularComponentReference.togselect(' +
         + this.id + ',&quot;matrix&quot;);});><label for=' + this.id +
       '></label></div>';
-    this.label += '<center><div class="mathjaxm" style="z-index:100;" id=' +
+    label += '<center><div class="mathjaxm" style="z-index:100;" id=' +
         'mathjaxid' + this.id  + '><center>' +
-        matrix.toMathJaxString() +
+        matrix.toKatexString() +
         '</center></div></center>';
 
-
+    this.setLabel(label);
 
   }
 
@@ -92,27 +96,23 @@ export class SvgNodeFunction extends SvgRenderable {
 
     super();
 
-//    if ( ffunction.getSelected() ) {
-//      this.selectedText = 'Select (Selected)';
-//    }
-//    else {
-//      this.selectedText = 'Select';
-//    }
-
     this.renderableType = RenderableType.SvgFunctionNode;
 
     this.ffunction = ffunction;
 
     this.id = ffunction.getId();
 
-    this.label = '';
-    this.label += '<div class="toggle-switch"><input '
-    if ( ffunction.getSelected() ) { this.label += 'checked="true"'; }
-    this.label += 'type="checkbox" id=' + this.id + 
+    let label = '';
+
+    label += '<div class="toggle-switch"><input ';
+    if ( ffunction.getSelected() ) { label += 'checked="true"'; }
+    label += 'type="checkbox" id=' + this.id +
       ' onclick=window.angularComponentReference.zone.run(()&#61;&#62;{window.angularComponentReference.togselect(' +
-        + this.id + ',&quot;function&quot;);});><label for=' + this.id + 
+        + this.id + ',&quot;function&quot;);});><label for=' + this.id +
       '></label></div>';
-    this.label += '<div>' + this.id + ffunction.toString() + '</div>';
+    label += '<div>' + this.id + ffunction.toString() + '</div>';
+
+    this.setLabel(label);
   }
 
   getFunction() {

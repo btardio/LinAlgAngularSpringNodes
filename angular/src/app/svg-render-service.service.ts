@@ -8,38 +8,45 @@ import { MatrixService } from './matrix-service.service';
 import { MorF } from './mor-f.enum';
 import { RenderableType } from './renderable-type.enum';
 import { SvgMessage } from './svg-message';
-import { SvgRenderable, SvgNodeMatrix, SvgNodeFunction, SvgEdge } from './svg-node';
+import { SvgMessageType } from './svg-message-type.enum';
+import { SvgRenderable, SvgNodeMatrix, SvgNodeFunction, SvgEdge, SvgRenderableContainer } from './svg-node';
 import { Injectable } from '@angular/core';
 import { Subject, Observable } from 'rxjs';
 import { Bag as basBag } from 'typescript-collections';
 import { OnInit } from '@angular/core';
 import * as katexrender from 'katex';
+import { LinkedList as basLinkedList } from 'typescript-collections';
+import { Set as basSet } from 'typescript-collections';
+import { Queue as basQueue } from 'typescript-collections';
+
 // import { KatexModule } from 'ng-katex';
 // import { KatexComponent } from 'ng-katex';
 
 //import { MathJax } from 'mathjax';
 // import * as mmjax from 'mathjaxnode';
- 
 
- 
+
+
 @Injectable({
   providedIn: 'root'
 })
 export class SvgRenderService  {
 
-  private toggledSvg: Subject<SvgMessage> = new Subject<SvgMessage>();
-  toggledSvg$: Observable<SvgMessage> = this.toggledSvg.asObservable();
+  // private toggledSvg: Subject<SvgMessage> = new Subject<SvgMessage>();
+  // toggledSvg$: Observable<SvgMessage> = this.toggledSvg.asObservable();
 
-  private renderSignal: Subject<Array<SvgRenderable>> = new Subject<Array<SvgRenderable>>();
-  renderSignal$: Observable<Array<SvgRenderable>> = this.renderSignal.asObservable();
+  private renderSignal: Subject<SvgRenderableContainer> = new Subject<SvgRenderableContainer>();
+  renderSignal$: Observable<SvgRenderableContainer> = this.renderSignal.asObservable();
 
-  nodes: Array<SvgRenderable>;
+  // nodes: Array<SvgRenderable>;
 
-  mjAPI: any;
+  svgRenderableContainer: SvgRenderableContainer = new SvgRenderableContainer();
+
+//  mjAPI: any;
 
   constructor( private matrixService: MatrixService ) {
 
-    this.nodes = new Array<SvgRenderable>();
+//    this.nodes = new Array<SvgRenderable>();
 
     this.matrixService.containerChanged$.subscribe(
       matrixchangebool => {
@@ -50,12 +57,18 @@ export class SvgRenderService  {
 
    }
 
-  toggle( svgMessage: SvgMessage ) {
+  consumeSvgMessage( svgMessage: SvgMessage ) {
 
-    this.addSelectedNodeToMatrixService( svgMessage );
+    switch ( svgMessage.getMessageType() ) {
+      case SvgMessageType.Select: {
+        this.addSelectedNodeToMatrixService( svgMessage );
+        break;
+      }
+    }
+
     // this.changeNodeText( svgMessage );
 
-    this.toggledSvg.next( svgMessage );
+    // this.toggledSvg.next( svgMessage );
 
   }
 //
@@ -181,6 +194,64 @@ export class SvgRenderService  {
     return renderable;
   }
 
+  nonRecurNodes( svgRenderableContainer: SvgRenderableContainer, m: LinAlgMatrix, f: LinAlgFunction ) {
+
+    const visitedFunctions: basQueue<LinAlgFunction> = new basQueue<LinAlgFunction>();
+    const visitedMatrices: basQueue<LinAlgMatrix> = new basQueue<LinAlgMatrix>();
+
+    const currentFunctions: basQueue<LinAlgFunction> = new basQueue<LinAlgFunction>();
+    const currentMatrices: basQueue<LinAlgMatrix> = new basQueue<LinAlgMatrix>();
+
+    let done = false;
+
+    if ( f != null ) { currentFunctions.enqueue(f); }
+    if ( m != null ) { currentMatrices.enqueue(m); }
+
+    while ( !done ) {
+
+      const wwf: LinAlgFunction = currentFunctions.dequeue();
+      if ( wwf != null ) {
+        const gim: basLinkedList<LinAlgMatrix> = wwf.getInputMatrices();
+        for ( let i = 0; i < gim.size(); i++ ) { currentMatrices.enqueue( gim.elementAtIndex(i) ); }
+      }
+      visitedFunctions.enqueue(wwf);
+
+      const wwm: LinAlgMatrix = currentMatrices.dequeue();
+      if ( wwm != null ) {
+        const gif: basLinkedList<LinAlgFunction> = wwm.getInputFunctions();
+        for ( let i = 0; i < gif.size(); i++ ) { currentFunctions.enqueue( gif.elementAtIndex(i) ); }
+      }
+      visitedMatrices.enqueue(wwm);
+
+      if ( currentFunctions.size() === 0 && currentMatrices.size() === 0 ) { done = true; }
+
+    }
+
+    while ( visitedMatrices.size() > 0 ) {
+      const snm: SvgNodeMatrix = new SvgNodeMatrix( visitedMatrices.dequeue() );
+      if ( !svgRenderableContainer.matrices.contains(snm) ) { svgRenderableContainer.matrices.add( snm ); }
+    } 
+
+    while ( visitedFunctions.size() > 0 ){
+      const snf: SvgNodeFunction = new SvgNodeFunction( visitedFunctions.dequeue() );
+      if ( !svgRenderableContainer.functions.contains(snf) ) { svgRenderableContainer.functions.add( snf ); }
+    }
+//    visitedMatrices.forEach(mfev => {
+//      const snm: SvgNodeMatrix = new SvgNodeMatrix( mfev );
+//      if ( !svgRenderableContainer.matrices.contains(snm) ) {
+//        svgRenderableContainer.matrices.add( snm );
+//      }
+//    });
+//    visitedFunctions.forEach(ffev => {
+//      const snf: SvgNodeFunction = new SvgNodeFunction( ffev );
+//      if ( !svgRenderableContainer.functions.contains(snf) ) {
+//        svgRenderableContainer.functions.add( snf );
+//      }
+//    });
+
+
+  }
+
   render(): void {
 
     const matrices: Array<LinAlgMatrix> = this.matrixService.getMatrices();
@@ -189,27 +260,168 @@ export class SvgRenderService  {
 
     const edges: basBag<LinAlgEdge> = this.matrixService.getEdges();
 
-    while ( this.nodes.length > 0 ) {
-      this.nodes.pop();
+    this.svgRenderableContainer.edges.clear();
+    this.svgRenderableContainer.functions.clear();
+    this.svgRenderableContainer.matrices.clear();
+
+    // const orderedNodes: basLinkedList<SvgRenderable> = new basLinkedList<SvgRenderable>();
+
+
+    // find no output matrices, add to nodes
+    //
+    // repeat
+    // {
+    // find input functions of matrix, add to nodes in order
+    // find input matrices of function, add matrices to nodes in order
+    // }
+    //
+    // add all edges in any order
+
+    const endMatrices: basSet<LinAlgMatrix> = this.matrixService.getMatricesWithoutOutputs();
+
+    const endFunctions: basSet<LinAlgFunction> = this.matrixService.getFunctionsWithoutOutputs();
+
+    const endMatricesArray: Array<LinAlgMatrix> = endMatrices.toArray();
+
+    for ( let j = 0; j < endMatricesArray.length; j++ ) {
+
+      const visitedFunctions: basQueue<LinAlgFunction> = new basQueue<LinAlgFunction>();
+      const visitedMatrices: basQueue<LinAlgMatrix> = new basQueue<LinAlgMatrix>();
+
+      const currentFunctions: basQueue<LinAlgFunction> = new basQueue<LinAlgFunction>();
+      const currentMatrices: basQueue<LinAlgMatrix> = new basQueue<LinAlgMatrix>();
+
+      let done = false;
+
+      currentMatrices.enqueue(endMatricesArray[j]);
+
+      while ( !done ) {
+
+        const wwf: LinAlgFunction = currentFunctions.dequeue();
+        if ( wwf != null ) {
+          const gim: basLinkedList<LinAlgMatrix> = wwf.getInputMatrices();
+          for ( let i = 0; i < gim.size(); i++ ) { currentMatrices.enqueue( gim.elementAtIndex(i) ); }
+        }
+        visitedFunctions.enqueue(wwf);
+
+        const wwm: LinAlgMatrix = currentMatrices.dequeue();
+        if ( wwm != null ) {
+          const gif: basLinkedList<LinAlgFunction> = wwm.getInputFunctions();
+          for ( let i = 0; i < gif.size(); i++ ) { currentFunctions.enqueue( gif.elementAtIndex(i) ); }
+        }
+        visitedMatrices.enqueue(wwm);
+
+        if ( currentFunctions.size() === 0 && currentMatrices.size() === 0 ) { done = true; }
+
+      }
+
+      while ( visitedMatrices.size() > 0 ) {
+        const snm: SvgNodeMatrix = new SvgNodeMatrix( visitedMatrices.dequeue() );
+        if ( !this.svgRenderableContainer.matrices.contains(snm) ) { this.svgRenderableContainer.matrices.add( snm ); }
+      }
+
+      while ( visitedFunctions.size() > 0 ) {
+        const dequeuedfunction: LinAlgFunction = visitedFunctions.dequeue();
+        const snf: SvgNodeFunction = new SvgNodeFunction( dequeuedfunction );
+        if ( !this.svgRenderableContainer.functions.contains(snf) ) {
+          this.svgRenderableContainer.functions.add( snf );
+        }
+        dequeuedfunction.getEdges().forEach( e => {
+          const newSvgEdge: SvgEdge = new SvgEdge(e);
+          if ( !this.svgRenderableContainer.edges.contains ( newSvgEdge ) ) {
+            this.svgRenderableContainer.edges.add( newSvgEdge );
+          }
+        });
+      }
     }
 
-    for ( let i = 0; i < matrices.length; i++ ) {
-      let newnode: SvgNodeMatrix = new SvgNodeMatrix( matrices[i] );
-      newnode = <SvgNodeMatrix>this.textToMathJax( newnode );
-      this.nodes.push( newnode );
+
+    const endFunctionsArray: Array<LinAlgFunction> = endFunctions.toArray();
+
+    for ( let j = 0; j < endFunctionsArray.length; j++ ) {
+
+      const visitedFunctions: basQueue<LinAlgFunction> = new basQueue<LinAlgFunction>();
+      const visitedMatrices: basQueue<LinAlgMatrix> = new basQueue<LinAlgMatrix>();
+
+      const currentFunctions: basQueue<LinAlgFunction> = new basQueue<LinAlgFunction>();
+      const currentMatrices: basQueue<LinAlgMatrix> = new basQueue<LinAlgMatrix>();
+
+      let done = false;
+
+      currentFunctions.enqueue(endFunctionsArray[j]);
+
+      while ( !done ) {
+
+        const wwf: LinAlgFunction = currentFunctions.dequeue();
+        if ( wwf != null ) {
+          const gim: basLinkedList<LinAlgMatrix> = wwf.getInputMatrices();
+          for ( let i = 0; i < gim.size(); i++ ) { currentMatrices.enqueue( gim.elementAtIndex(i) ); }
+        }
+        visitedFunctions.enqueue(wwf);
+
+        const wwm: LinAlgMatrix = currentMatrices.dequeue();
+        if ( wwm != null ) {
+          const gif: basLinkedList<LinAlgFunction> = wwm.getInputFunctions();
+          for ( let i = 0; i < gif.size(); i++ ) { currentFunctions.enqueue( gif.elementAtIndex(i) ); }
+        }
+        visitedMatrices.enqueue(wwm);
+
+        if ( currentFunctions.size() === 0 && currentMatrices.size() === 0 ) { done = true; }
+
+      }
+
+      while ( visitedMatrices.size() > 0 ) {
+        const snm: SvgNodeMatrix = new SvgNodeMatrix( visitedMatrices.dequeue() );
+        if ( !this.svgRenderableContainer.matrices.contains(snm) ) { this.svgRenderableContainer.matrices.add( snm ); }
+      }
+
+      while ( visitedFunctions.size() > 0 ) {
+        const dequeuedfunction: LinAlgFunction = visitedFunctions.dequeue();
+        const snf: SvgNodeFunction = new SvgNodeFunction( dequeuedfunction );
+        if ( !this.svgRenderableContainer.functions.contains(snf) ) {
+          this.svgRenderableContainer.functions.add( snf );
+        }
+        dequeuedfunction.getEdges().forEach( e => {
+          const newSvgEdge: SvgEdge = new SvgEdge(e);
+          if ( !this.svgRenderableContainer.edges.contains ( newSvgEdge ) ) {
+            this.svgRenderableContainer.edges.add( newSvgEdge );
+          }
+        });
+
+      }
     }
 
-    for ( let i = 0; i < functions.length; i++ ) {
-      let newnode: SvgNodeFunction = new SvgNodeFunction( functions[i] );
-      newnode = <SvgNodeFunction>this.textToMathJax( newnode );
-      this.nodes.push( newnode );
-    }
+//    const edgesArray: Array<LinAlgEdge> = edges.toArray();
+//    for ( let i = 0; i < edgesArray.length; i++ ) {
+//      this.svgRenderableContainer.edges.add( new SvgEdge( edgesArray[i] ) );
+//    }
 
-    edges.forEach( edge => {
-      this.nodes.push( new SvgEdge( edge ) );
-    });
+    // console.dir(this.svgRenderableContainer.matrices.toArray());
+    // console.dir(this.svgRenderableContainer.functions.toArray());
+    // console.dir(orderedNodes);
 
-    this.renderSignal.next( this.nodes );
+//    while ( this.nodes.length > 0 ) {
+//      this.nodes.pop();
+//    }
+//
+//    for ( let i = 0; i < matrices.length; i++ ) {
+//      let newnode: SvgNodeMatrix = new SvgNodeMatrix( matrices[i] );
+//      newnode = <SvgNodeMatrix>this.textToMathJax( newnode );
+//      this.nodes.push( newnode );
+//    }
+//
+//    for ( let i = 0; i < functions.length; i++ ) {
+//      let newnode: SvgNodeFunction = new SvgNodeFunction( functions[i] );
+//      newnode = <SvgNodeFunction>this.textToMathJax( newnode );
+//      this.nodes.push( newnode );
+//    }
+//
+//    edges.forEach( edge => {
+//      this.nodes.push( new SvgEdge( edge ) );
+//    });
+
+    //this.renderSignal.next( this.nodes );
+    this.renderSignal.next( this.svgRenderableContainer );
 
   }
 

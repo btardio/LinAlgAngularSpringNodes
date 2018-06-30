@@ -1,4 +1,5 @@
 import { HideShowService } from '../hideshowservices.service';
+import { LinAlgMatrix } from '../matrix';
 import { LinAlgFunction } from '../matrix-function';
 import { MatrixService } from '../matrix-service.service';
 import { Operenum } from '../operenum.enum';
@@ -22,17 +23,21 @@ export class MathaddfunctiontoolbarComponent implements OnInit {
   ngOnInit() {
   }
 
-  clickadd(): number | Array<number> {
+  clickAddFunctionAdd(): Array<LinAlgMatrix | LinAlgFunction> {
 
-    let addedid: number | Array<number>;
+    let rval: Array<LinAlgMatrix|LinAlgFunction>;
 
     const matrixfunction: LinAlgFunction = new LinAlgFunction(Operenum.Add);
 
-    addedid = this.matrixService.addFunction(matrixfunction);
+    rval = this.matrixService.addFunction(matrixfunction);
 
     this.hideshowservice.swapHiddenmathaddfunctiontoolbar( );
 
-    return addedid;
+    this.matrixService.clearSelectedAll();
+
+    this.matrixService.containerChanged();
+
+    return rval;
   }
 
 }

@@ -4,7 +4,7 @@
 
 
 			Create Matrix &nbsp;
-			<button (click)="finished()">Finished</button>
+			<button (click)="clickAddMatrix()">Finished</button>
 			&nbsp;
 			<button (click)="addRow()">Add Row</button>
 			&nbsp;
@@ -20,19 +20,19 @@
   <table border=1>	      
 <ng-container *ngFor="let row of matrix; let i = index">
 	<tr>
-	<ng-container *ngFor="let number of row; let j = index">
+	<ng-container *ngFor="let instr of row; let j = index">
 		<td><input size="4" 
-		           value="{{number}}" 
+		           value="{{instr}}" 
 		           type="text" 
 				   [(ngModel)]="matrix[i][j]" 
-		           [ngModelOptions]="{updateOn: 'blur',standalone: true}" 		           
-		           (ngModelChange)="saverange(i,j)"></td>
+		           [ngModelOptions]="{updateOn: 'blur',standalone: true}">
+        </td>
 	</ng-container>
 	</tr>
 </ng-container>
 </table>
   
-
+<!--  (ngModelChange)="saverange(i,j)"   -->
   
   
   

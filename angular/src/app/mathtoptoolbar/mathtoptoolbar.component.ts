@@ -26,25 +26,45 @@ export class MathtoptoolbarComponent implements OnInit {
   addfunctiondisabled = true;
   erasedisabled = true;
   calcdisabled = false;
+  swaporderdisabled = false;
   matrixHideShowServiceSubscription: Subscription;
   functionHideShowServiceSubscription: Subscription;
-  matrixServiceSubscription: Subscription;
+//  matrixServiceSubscription: Subscription;
 
   constructor( private hideshowservice: HideShowService,
                private matrixService: MatrixService,
                private svgRenderService: SvgRenderService ) {
 
-        this.matrixServiceSubscription = this.matrixService.selectedMatricesChanged$.subscribe(
-          matrixServiceClone => {
+//        this.matrixServiceSubscription = this.matrixService.selectedMatricesChanged$.subscribe(
+//          matrixServiceClone => {
+//
+//          this.setButtonVisibility ( );
+//
+//        });
+//
+//        this.matrixServiceSubscription = this.matrixService.selectedFunctionsChanged$.subscribe(
+//          matrixServiceClone => {
+//
+//          this.setButtonVisibility ( );
+//
+//        });
 
-          this.setButtonVisibility ( );
+        /**
+         * If the contents of the container changed, there will be nothing selected,
+         * set button visibility accordingly.
+         */
+//        this.matrixService.containerChanged$.subscribe( nullvar => {
+//
+//          this.setButtonVisibility();
+//
+//        });
 
-        });
+        /**
+         * If the selected nodes change, reset button visibility.
+         */
+        this.matrixService.selectedChanged$.subscribe( nullvar => {
 
-        this.matrixServiceSubscription = this.matrixService.selectedFunctionsChanged$.subscribe(
-          matrixServiceClone => {
-
-          this.setButtonVisibility ( );
+          this.setButtonVisibility();
 
         });
 
@@ -61,7 +81,7 @@ export class MathtoptoolbarComponent implements OnInit {
   clickContainerChanged() {
     this.matrixService.containerChanged();
   }
-  
+
   setButtonVisibility( ) {
 
     const selectedMatricesArray: Array<number> = this.matrixService.getSelectedMatricesAsArray();
@@ -109,20 +129,38 @@ export class MathtoptoolbarComponent implements OnInit {
   }
 
   addEdge() {
-
-    this.matrixService.clickAddEdge();
-
+    try {
+      this.matrixService.clickAddEdge();
+    }
+    catch (e) {
+      throw Error(e);
+    }
+    finally {
+      this.matrixService.clearSelectedAll();
+      this.matrixService.containerChanged();
+    }
   }
 
   swapDirection() {
 
     this.matrixService.clickSwapDirection();
+    this.matrixService.clearSelectedAll();
+    this.matrixService.containerChanged();
+
+  }
+
+  swapOrder() {
+
+    this.matrixService.clickSwapOrder();
+    this.matrixService.clearSelectedAll();
+    this.matrixService.containerChanged();
 
   }
 
   erase() { // wired to template
     this.matrixService.deleteSelectedMatrices();
     this.matrixService.deleteSelectedFunctions();
+    this.matrixService.clearSelectedAll();
     this.matrixService.containerChanged();
 
   }
@@ -130,7 +168,8 @@ export class MathtoptoolbarComponent implements OnInit {
   selectAll() { // wired to template
 
     this.matrixService.selectAll();
-    this.svgRenderService.render();
+    this.matrixService.containerChanged();
+    // this.svgRenderService.render();
   }
 
 }
