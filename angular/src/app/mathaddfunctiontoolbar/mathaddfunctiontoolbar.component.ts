@@ -40,4 +40,40 @@ export class MathaddfunctiontoolbarComponent implements OnInit {
     return rval;
   }
 
+  clickAddFunctionSubtract(): Array<LinAlgMatrix | LinAlgFunction> {
+
+    let rval: Array<LinAlgMatrix|LinAlgFunction>;
+
+    const matrixfunction: LinAlgFunction = new LinAlgFunction(Operenum.Subtract);
+
+    rval = this.matrixService.addFunction(matrixfunction);
+
+    this.hideshowservice.swapHiddenmathaddfunctiontoolbar( );
+
+    this.matrixService.clearSelectedAll();
+
+    this.matrixService.containerChanged();
+
+    return rval;
+  }
+
+
+  clickAddFunctionProduct(): Array<LinAlgMatrix | LinAlgFunction> {
+
+    let rval: Array<LinAlgMatrix|LinAlgFunction>;
+
+    const matrixfunction: LinAlgFunction = new LinAlgFunction(Operenum.Multiply);
+
+    rval = this.matrixService.addFunction(matrixfunction);
+
+    this.hideshowservice.swapHiddenmathaddfunctiontoolbar( );
+
+    this.matrixService.clearSelectedAll();
+
+    this.matrixService.containerChanged();
+
+    return rval;
+  }
+
+
 }

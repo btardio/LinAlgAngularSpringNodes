@@ -90,6 +90,8 @@ export class MatrixHttpClientService {
       }
       else {
         if ( f.getOperand() === Operenum.Add ) { postInterface.operations.push('+'); }
+        else if ( f.getOperand() === Operenum.Subtract ) { postInterface.operations.push('-'); }
+        else if ( f.getOperand() === Operenum.Multiply ) { postInterface.operations.push('*'); }
       }
 
     });

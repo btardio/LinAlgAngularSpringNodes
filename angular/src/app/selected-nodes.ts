@@ -1,5 +1,5 @@
 import { LinAlgMatrix } from './matrix';
-import { LinkedList as basLinkedList } from 'typescript-collections';
+import { LinkedList as basLinkedList, BSTreeKV } from 'typescript-collections';
 
 export class SelectedNodes {
 
@@ -43,9 +43,10 @@ export class SelectedNodes {
     return this.selectedMatrices;
   }
 
+
   pushFunction( n: number ): void {
 
-    if ( n === undefined ) {
+    if ( n === undefined || n === null ) {
       throw Error('Attempting insertion of undefined.');
     }
 
@@ -61,7 +62,7 @@ export class SelectedNodes {
 
   pushMatrix( n: number ): void {
 
-    if ( n === undefined ) {
+    if ( n === undefined || n === null ) {
       throw Error('Attempting insertion of undefined.');
     }
 
@@ -77,7 +78,7 @@ export class SelectedNodes {
 
   pushFunctionIgnoreDuplicate( n: number ): void {
 
-    if ( n === undefined ) {
+    if ( n === undefined || n === null ) {
       throw Error('Attempting insertion of undefined.');
     }
 

@@ -250,10 +250,10 @@ describe('SvgRender Tests > ', () => {
     
    
      
-    console.log(svgRenderService.svgRenderableContainer.matrices.size());
-
-    let msnzc: MathSvgNgZoneComponent = new MathSvgNgZoneComponent(null, svgRenderService);
-    
+//    console.log(svgRenderService.svgRenderableContainer.matrices.size());
+//
+//    let msnzc: MathSvgNgZoneComponent = new MathSvgNgZoneComponent(null, svgRenderService);
+//    
     matrixService.addSelectedMatrix( addedMatrices[1].getId() );
     matrixService.addSelectedMatrix( addedMatrices[2].getId() );
     matrixService.addSelectedMatrix( addedMatrices[3].getId() );

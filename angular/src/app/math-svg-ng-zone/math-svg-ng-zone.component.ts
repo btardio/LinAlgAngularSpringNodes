@@ -51,7 +51,7 @@ export class MathSvgNgZoneComponent implements OnInit {
    }
 
   /**
-   * Click handler for the svg box buttons
+   * Click handler for the svg box toggles/buttons
    */
   clickSelected(id, strtype): void {
 

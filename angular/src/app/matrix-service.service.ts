@@ -11,7 +11,7 @@ import { HttpClient } from '@angular/common/http';
 import { Set as basSet } from 'typescript-collections';
 import { BSTree } from 'typescript-collections';
 import { LinkedList as basLinkedList } from 'typescript-collections';
-import { Bag as basBag } from 'typescript-collections';
+import { Bag as basBag, BSTreeKV } from 'typescript-collections';
 
 //
 // TODO
@@ -27,6 +27,7 @@ import { Bag as basBag } from 'typescript-collections';
 //  include other operands *, -, 
 //  with only 1 matrix selected, swap direction should move matrix to other side of a function without having function selected
 //  ...
+//  build more tests from console.log(springPost); in calculateTests.spec.ts
 //
 // README
 //  node.js serve: ng serve --proxy-config ./proxy.conf.json
@@ -92,6 +93,10 @@ export class MatrixService {
    */
   private selected: SelectedNodes;
 
+  /**
+   * A counter that increments by 1 for every added matrix, never decrements from erase
+   */
+  private matrixCounter = 0;
 
   /**
    * Injects HttpClient service.
@@ -138,6 +143,14 @@ export class MatrixService {
     this.availableids.add(id);
 
     return id;
+  }
+
+  /**
+   * Returns the current count of the matrices that have been added, always increments, erase never decrements this counter
+   */
+  getMatrixCounter(): number {
+    this.matrixCounter++;
+    return this.matrixCounter;
   }
 
   /**
@@ -330,6 +343,49 @@ export class MatrixService {
   }
 
   /**
+   * Order selected matrices ( list of numbers ) per their orderCount
+   */
+  orderSelectedMatrices( matrices: basLinkedList<number> ): basLinkedList<LinAlgMatrix> {
+
+    type K = null & {
+        key: number;
+    };
+
+    type Vm = K & {
+        data: LinAlgMatrix;
+    };
+
+    function compare(a: K, b: K) {
+      if (a.key > b.key) {
+          return 1;
+      } else if (a.key < b.key) {
+          return -1;
+      } else { // a.key === b.key
+          return 0;
+      }
+    }
+
+    let orderedSelectedMatrices: BSTreeKV<K, Vm> = new BSTreeKV( compare );
+
+    matrices.forEach( mid => {
+      const matrix: LinAlgMatrix = this.getMatrixWithId(mid);
+      const madd: Vm = { key: matrix.getOrderCount(), data: matrix };
+      orderedSelectedMatrices.add( madd );
+    });
+
+    const rlist: basLinkedList<LinAlgMatrix> = new basLinkedList<LinAlgMatrix>();
+
+    orderedSelectedMatrices.toArray().forEach( m => { rlist.add( m.data ); });
+
+    // clean up a little
+    orderedSelectedMatrices.clear();
+    orderedSelectedMatrices = null;
+
+    return rlist;
+  }
+
+
+  /**
    * Internal: Create a result matrix for a newly created function.
    */
   private makeResultMatrix( f: LinAlgFunction ): LinAlgMatrix {
@@ -374,19 +430,16 @@ export class MatrixService {
     f.setId(this.getPushUniqueId());
     const rval: Array<LinAlgFunction | LinAlgMatrix> = new Array<LinAlgFunction | LinAlgMatrix>();
 
-    const selectedMatrices: basLinkedList<number> = this.selected.getSelectedMatricesAsLinkedList();
-
-    selectedMatrices.reverse();
+    const selectedMatrices: basLinkedList<LinAlgMatrix> = this.orderSelectedMatrices(this.selected.getSelectedMatricesAsLinkedList());
 
     if ( selectedMatrices.size() === 0 ) {
       rval.push(this.containerMatFunc.addfunc(f));
-      // this.matrixHttpClient.setToCalcInFuture(f);
     }
     else {
       selectedMatrices.forEach( matrix => {
-        const edge: LinAlgEdge = new LinAlgEdge( this.getPushUniqueId(), this.getMatrixWithId(matrix), f );
+        const edge: LinAlgEdge = new LinAlgEdge( this.getPushUniqueId(), matrix, f );
         f.addEdge(edge);
-        this.getMatrixWithId(matrix).addEdge(edge);
+        matrix.addEdge(edge);
       });
 
       rval.push(this.makeResultMatrix(f));
@@ -471,6 +524,8 @@ export class MatrixService {
   addMatrix( m: LinAlgMatrix ): LinAlgMatrix {
 
     m.setId ( this.getPushUniqueId() );
+
+    m.setOrderCount( this.getMatrixCounter() );
 
     let rval: LinAlgMatrix;
 

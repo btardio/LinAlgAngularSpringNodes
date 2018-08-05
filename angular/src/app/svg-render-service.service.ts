@@ -22,7 +22,7 @@ import { Queue as basQueue } from 'typescript-collections';
 // import { KatexModule } from 'ng-katex';
 // import { KatexComponent } from 'ng-katex';
 
-//import { MathJax } from 'mathjax';
+// import { MathJax } from 'mathjax';
 // import * as mmjax from 'mathjaxnode';
 
 

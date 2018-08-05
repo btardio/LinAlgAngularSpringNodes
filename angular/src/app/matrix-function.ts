@@ -83,13 +83,13 @@ export class LinAlgFunction {
     const boolns: Array<boolean> = new Array<boolean>();
 
     return Observable.create(observer => {
-      this.getInputMatrices().forEach( m => {
+      this.getInputMatrices().forEach( inm => {
 
-        m.calc( matrixHttpClient ).subscribe( m => {
+        inm.calc( matrixHttpClient ).subscribe( m => {
 
           boolns.push( true );
 
-          if ( boolns.length == this.getInputMatrices().size() ) {
+          if ( boolns.length === this.getInputMatrices().size() ) {
 
             matrixHttpClient.makeRequest( this ).subscribe( response => {
 
@@ -97,12 +97,12 @@ export class LinAlgFunction {
 //                throw Error('Unable to calculate two output matrices for operand.');
 //              }
 
-              this.getOutputMatrices().forEach( m => {
-                m.setMatrix( response.rmatrix );
+              this.getOutputMatrices().forEach( outm => {
+                outm.setMatrix( response.rmatrix );
               });
-              //const outputMatrix: LinAlgMatrix = this.getOutputMatrices().first();
+              // const outputMatrix: LinAlgMatrix = this.getOutputMatrices().first();
 
-              //outputMatrix.setMatrix( response.rmatrix );
+              // outputMatrix.setMatrix( response.rmatrix );
 
               observer.next(this);
               observer.complete();
@@ -246,7 +246,7 @@ export class LinAlgFunction {
     let n_rows = 0;
     let n_columns = 0;
 
-    if ( this.operand === Operenum.Add ) {
+    if ( this.operand === Operenum.Add || this.operand === Operenum.Subtract) {
 
       let first = true;
       let check = false;
@@ -255,7 +255,7 @@ export class LinAlgFunction {
 
         if ( check ) {
           if ( edge.getMatrixOfIJ().getMatrixAsArray().length !== n_rows ) {
-            throw Error('Dimensions error for addition.');
+            throw Error('Dimensions error for addition/subtraction.');
           }
         }
         n_rows = edge.getMatrixOfIJ().getMatrixAsArray().length;
@@ -266,7 +266,7 @@ export class LinAlgFunction {
 
         if ( check ) {
           if ( edge.getMatrixOfIJ().getMatrixAsArray()[0].length !== n_columns ) {
-            throw Error('Dimensions error for addition');
+            throw Error('Dimensions error for addition/subtraction');
           }
         }
         n_columns = edge.getMatrixOfIJ().getMatrixAsArray()[0].length;
@@ -275,11 +275,83 @@ export class LinAlgFunction {
           throw Error('Matrix has 0 columns');
         }
 
+        if ( first ) { first = false; check = true; }
+
       });
 
-      if ( first ) { first = false; check = true; }
+    }
+
+    else if ( this.operand === Operenum.Multiply ) {
+
+      let first = true;
+      let check = false;
+      let left = true;
+
+      // const reversedEdges: basLinkedList<LinAlgEdge> = new basLinkedList<LinAlgEdge>();
+
+      // this.edges.forEach( edge => { reversedEdges.add(edge); });
+
+      // reversedEdges.reverse();
+
+      this.edges.forEach( edge => {
+
+//        if ( edge.getMatrixOfIJ().getMatrixAsArray().length === 0 ) {
+//          throw Error('Matrix has 0 rows');
+//        }
+//
+//
+//        if ( check ) {
+//
+//          // 4x2   2x3      4 x 3     3 x 9 ...   4 x 9    ... 9 x 2    =  4 x 2
+//
+//          // x y    a b c    g h k
+//          // z w    d e f    i j l
+//          // q r             m n o
+//          // s t             p q r
+//
+//          if ( n_columns != edge.getMatrixOfIJ().getMatrixAsArray().length ) {
+////          if ( edge.getMatrixOfIJ().getMatrixAsArray().length !== n_rows ) {
+//            throw Error('Dimensions error for multiplication.');
+////          }
+//          }
+//        }
+
+        if ( !first ) {
+
+          if ( n_columns !== edge.getMatrixOfIJ().getMatrixAsArray().length ) {
+            throw Error('Dimensions error for multiplications.');
+          }
+        }
+
+        if ( left ) {
+          if ( first ) {
+            n_rows = edge.getMatrixOfIJ().getMatrixAsArray().length;
+            n_columns = edge.getMatrixOfIJ().getMatrixAsArray()[0].length;
+          }
+          else {
+            n_rows = n_rows;
+            n_columns = edge.getMatrixOfIJ().getMatrixAsArray()[0].length;
+          }
+
+          left = false;
+        }
+        else {
+          n_columns = edge.getMatrixOfIJ().getMatrixAsArray()[0].length;
+          left = true;
+        }
+
+        // n_columns = edge.getMatrixOfIJ().getMatrixAsArray().length;
+
+//        if ( n_columns === 0 ) {
+//          throw Error('Matrix has 0 columns');
+//        }
+
+        if ( first ) { first = false; check = true; }
+
+      });
 
     }
+
     return new Dimensions(n_rows, n_columns);
   }
 
@@ -405,7 +477,7 @@ export class LinAlgFunction {
 
     delete this.id;
     delete this.operand;
-    
+
   }
 }
 

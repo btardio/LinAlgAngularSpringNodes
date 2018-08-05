@@ -18,11 +18,34 @@ export class MathaddmatrixtoolbarComponent implements OnInit {
 
   private matrix: Array<Array<number>>;
 
+  private ainput: Array<number>;
+
   // matrixService from constructor
 
   constructor(private matrixService: MatrixService, private hideshowservice: HideShowService ) {
 
-    this.matrix = [[1, 3], [0, 1]];
+    this.matrix = new Array<Array<number>>();
+
+    const rowa = new Array<number>();
+    rowa.push(1);
+    rowa.push(2);
+    rowa.push(3);
+
+    const rowb = new Array<number>();
+    rowb.push(4);
+    rowb.push(5);
+    rowb.push(6);
+
+    const rowc = new Array<number>();
+    rowc.push(7);
+    rowc.push(8);
+    rowc.push(9);
+
+    this.matrix.push(rowa);
+    this.matrix.push(rowb);
+    this.matrix.push(rowc);
+
+    // this.ainput = [1, 2, 3, 4, 5, 6, 7, 8];
 
     hideshowservice.hiddenmathaddmatrixtoolbarObs$.subscribe( boolhidden => { this.boolhiddenaddmatrix = boolhidden; } );
 
@@ -60,11 +83,23 @@ export class MathaddmatrixtoolbarComponent implements OnInit {
   }
 
   addColumn() {
+
+    const newMatrix: Array<Array<number>> = new Array<Array<number>>();
+
     for ( let i = 0; i < this.matrix.length; i++) {
 
-      this.matrix[i].push(0);
+      const newRow: Array<number> = new Array<number>();
+
+      for ( let j = 0; j < this.matrix[i].length; j++ ) { 
+        newRow.push(this.matrix[i][j]); 
+      }
+      newRow.push(0);
+      
+      newMatrix.push(newRow);
 
     }
+    
+    this.matrix = newMatrix;
   }
 
   deleteColumn() {

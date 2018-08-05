@@ -5,7 +5,7 @@ import { Set as basSet, BSTreeKV } from 'typescript-collections';
 import { MultiDictionary as basMultiDict } from 'typescript-collections';
 import { Bag as basBag } from 'typescript-collections';
 
-type K = {
+type K = null & {
     key: number;
 };
 

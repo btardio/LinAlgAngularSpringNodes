@@ -36,6 +36,12 @@ export class LinAlgMatrix {
   private edges: basLinkedList<LinAlgEdge>;
 
 
+  /**
+   * counter of the matrix being added to the container, used for determining the order of nodes selected, could write this better
+   * using render order to visually determine order
+   */
+  private orderCount: number;
+
 
   /**
    * Instantiates a matrix, setting the matrix and, if provided, the edges
@@ -60,7 +66,13 @@ export class LinAlgMatrix {
 
   }
 
+  setOrderCount( n: number ): void {
+    this.orderCount = n;
+  }
 
+  getOrderCount(): number {
+    return this.orderCount;
+  }
 
   /**
    * Calculates results for this matrix, do not call directly, called from MatrixService
